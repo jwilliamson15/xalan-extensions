@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HttpXmlExtensionTest {
 
   private HttpServer server;
-  private final AtomicReference<String> lastAcceptHeader = new AtomicReference<>();
-  private final AtomicReference<String> lastTraceHeader = new AtomicReference<>();
+  private String lastAcceptHeader;
+  private String lastTraceHeader;
 
   @AfterEach
   void tearDown() {
@@ -61,8 +61,8 @@ class HttpXmlExtensionTest {
     extension.addHeader(headers, "X-Trace-Id", "abc-123");
 
     assertEquals("ok", extension.get(url, headers));
-    assertEquals("application/xml", lastAcceptHeader.get());
-    assertEquals("abc-123", lastTraceHeader.get());
+    assertEquals("application/xml", lastAcceptHeader);
+    assertEquals("abc-123", lastTraceHeader);
   }
 
   private HttpServer startServer(int statusCode, String responseBody) throws IOException {
@@ -74,8 +74,8 @@ class HttpXmlExtensionTest {
   }
 
   private void handleRequest(HttpExchange exchange, int statusCode, String responseBody) throws IOException {
-    lastAcceptHeader.set(getHeaderValue(exchange, "Accept"));
-    lastTraceHeader.set(getHeaderValue(exchange, "X-Trace-Id"));
+    lastAcceptHeader = getHeaderValue(exchange, "Accept");
+    lastTraceHeader = getHeaderValue(exchange, "X-Trace-Id");
 
     byte[] responseBytes = responseBody.getBytes(StandardCharsets.UTF_8);
     exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");
@@ -87,7 +87,7 @@ class HttpXmlExtensionTest {
   }
 
   private String getHeaderValue(HttpExchange exchange, String headerName) {
-    for (Map.Entry<String, java.util.List<String>> entry : exchange.getRequestHeaders().entrySet()) {
+    for (Map.Entry<String, List<String>> entry : exchange.getRequestHeaders().entrySet()) {
       if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(headerName)) {
         return entry.getValue().isEmpty() ? null : entry.getValue().get(0);
       }
