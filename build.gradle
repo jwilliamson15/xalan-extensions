@@ -16,9 +16,10 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.4.3'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'xalan:xalan:2.7.2'
+    testImplementation 'xalan:xalan:2.7.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
