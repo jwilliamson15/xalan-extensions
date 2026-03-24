@@ -22,6 +22,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,6 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class HttpXmlExtensionXsltTest {
 
   private HttpServer server;
+  private final AtomicReference<String> lastAcceptHeader = new AtomicReference<>();
+  private final AtomicReference<String> lastTraceHeader = new AtomicReference<>();
 
   @AfterEach
   void tearDown() {
@@ -53,16 +57,23 @@ class HttpXmlExtensionXsltTest {
 
       Transformer transformer = new TransformerFactoryImpl().newTransformer(xslt);
       transformer.setParameter("url", url);
+      transformer.setParameter("accept", "application/xml");
+      transformer.setParameter("traceId", "from-xslt");
 
       StringWriter output = new StringWriter();
       transformer.transform(input, new StreamResult(output));
 
       String bodyText = extractBodyText(output.toString());
       assertEquals("hello-from-http", bodyText);
+      assertEquals("application/xml", lastAcceptHeader.get());
+      assertEquals("from-xslt", lastTraceHeader.get());
     }
   }
 
   private void handleRequest(HttpExchange exchange) throws IOException {
+    lastAcceptHeader.set(getHeaderValue(exchange, "Accept"));
+    lastTraceHeader.set(getHeaderValue(exchange, "X-Trace-Id"));
+
     byte[] responseBytes = "hello-from-http".getBytes(StandardCharsets.UTF_8);
     exchange.getResponseHeaders().add("Content-Type", "text/plain; charset=UTF-8");
     exchange.sendResponseHeaders(200, responseBytes.length);
@@ -70,6 +81,15 @@ class HttpXmlExtensionXsltTest {
     try (exchange; OutputStream os = exchange.getResponseBody()) {
       os.write(responseBytes);
     }
+  }
+
+  private String getHeaderValue(HttpExchange exchange, String headerName) {
+    for (Map.Entry<String, java.util.List<String>> entry : exchange.getRequestHeaders().entrySet()) {
+      if (entry.getKey() != null && entry.getKey().equalsIgnoreCase(headerName)) {
+        return entry.getValue().isEmpty() ? null : entry.getValue().get(0);
+      }
+    }
+    return null;
   }
 
   private String extractBodyText(String xml) throws Exception {

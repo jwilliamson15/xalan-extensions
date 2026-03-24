@@ -22,6 +22,8 @@ Jar output:
 
 - Class: `com.example.xalan.extensions.HttpXmlExtension`
 - Method: `get(String url)`
+- Method: `get(String url, HttpRequestHeaders headers)`
+- Helper methods: `newHeaders()` and `addHeader(HttpRequestHeaders, String, String)`
 - Uses: Apache HttpClient 5
 - Behavior: returns response body for `2xx` responses, throws `RuntimeException` for non-`2xx` or transport errors
 
@@ -35,7 +37,7 @@ Jar output:
 
 - XSLT file: `src/test/resources/xslt/http-extension.xsl`
 - Extension namespace: `xalan://com.example.xalan.extensions.HttpXmlExtension`
-- Example call: `ext:get($extObj, $url)`
+- Example calls: `http:newHeaders($extObj)`, `http:addHeader($extObj, $headers, 'Accept', 'application/xml')`, `http:get($extObj, $url, $headers)`
 
 ## Tests
 
